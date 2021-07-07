@@ -1,97 +1,22 @@
-# Hilda Mendoza-Avila
-# July 3, 2021
-
-library(shiny)
 library(shinydashboard)
-library(readxl)
-library(ggplot2)
 library(leaflet)
-options(scipen = 100)
-
-# Define UI for app
-ui <- dashboardPage(
-  dashboardHeader(
-    # App title
-    title = "Raw Power 2.0"
-  ),
-  dashboardSidebar(
-    # Input: Selector for choosing stateDataset
-    selectInput(inputId = "stateDataset",
-                label = "Choose a state:",
-                choices = c(
-                  "Alabama",
-                  "Alaska",
-                  "Arizona",
-                  "Arkansas",
-                  "California",
-                  "Colorado",
-                  "Connecticut",
-                  "Delaware",
-                  "Florida",
-                  "Georgia",
-                  "Hawaii",
-                  "Idaho",
-                  "Illinois",
-                  "Indiana",
-                  "Iowa",
-                  "Kansas",
-                  "Kentucky",
-                  "Louisiana",
-                  "Maine",
-                  "Maryland",
-                  "Massachusetts",
-                  "Michigan",
-                  "Minnesota",
-                  "Mississippi",
-                  "Missouri",
-                  "Montana",
-                  "Nebraska",
-                  "Nevada",
-                  "New Hampshire",
-                  "New Jersey",
-                  "New Mexico",
-                  "New York",
-                  "North Carolina",
-                  "North Dakota",
-                  "Ohio",
-                  "Oklahoma",
-                  "Oregon",
-                  "Pennsylvania",
-                  "Rhode Island",
-                  "South Carolina",
-                  "South Dakota",
-                  "Tennessee",
-                  "Texas",
-                  "Utah",
-                  "Vermont",
-                  "Virginia",
-                  "Washington",
-                  "West Virginia",
-                  "Wisconsin",
-                  "Wyoming"
-                )
-    )
-  ),
-  dashboardBody(
-    tags$style(type = "text/css", "#selectedStateMap {height: calc(100vh - 90px) !important;}"),
-    leafletOutput("selectedStateMap")
-  )
-)
+library(dplyr)
+library(curl) # make the jsonlite suggested dependency explicit
 
 # Define server logic required to draw a leaflet Map
-server <- function(input, output) {
+function(input, output, session) {
   energyData <- read_excel("cleanedEnergyData.xlsx")
   dataset <- energyData
-  
+
   # CODE TO BE IMPROVED FOR FASTER RUNTIME -----------
-  
+
   sourceURLs <- list(COAL = "COAL.png", OIL = "OIL.png", GAS = "GAS.png", NUCLEAR = "NUCLEAR.png",
                      HYDRO = "HYDRO.png", BIOMASS = "BIOMASS.png", WIND = "WIND.png",
                      SOLAR = "SOLAR.png", GEOTHERMAL = "GEOTHERMAL.png", OTHER = "OTHER.png")
-  
+
   universalTotalGraphHeight = 5;
   universalAnchorY = 3;
-  
+
   getIconWidth <- function(sourceIndex){
     sourceWidth <- switch(sourceIndex, dataset$COAL_PERCENTAGE, dataset$OIL_PERCENTAGE,
                           dataset$GAS_PERCENTAGE, dataset$NUCLEAR_PERCENTAGE,
@@ -102,13 +27,13 @@ server <- function(input, output) {
     sourceWidth <- ifelse(sourceWidth < 0.00000001, 0.00000001, sourceWidth)
     sourceWidth
   }
-  
+
   getIconAnchorX <- function(index, anchorSum){
     inconWidth = getIconWidth(index)
-    
+
     ifelse(index == 1, inconWidth + anchorSum, getIconAnchorX(index - 1, anchorSum = anchorSum + inconWidth))
   }
-  
+
   sourceGraphIcon <- function(index){
     makeIcon(
       iconUrl = sourceURLs[index],
@@ -117,16 +42,16 @@ server <- function(input, output) {
       iconAnchorY = universalAnchorY
     )
   }
-  
+
   #-------------------------------------------------------
-  
+
   getStateDataset <- function(selectedState) {
     subset(energyData, PlantState == selectedState)
   }
-  
+
   # Return the requested dataset ----
   datasetInput <- reactive({
-    switch(input$stateDataset, 
+    switch(input$stateDataset,
            "Alabama" = getStateDataset('AL'),
            "Alaska" = getStateDataset('AK'),
            "Arizona" = getStateDataset('AZ'),
@@ -179,7 +104,7 @@ server <- function(input, output) {
            "Wyoming" = getStateDataset('WY')
     )
   })
-  
+
   output$selectedStateMap <- renderLeaflet({
     dataset <- datasetInput()
     leaflet(dataset) %>%
@@ -203,61 +128,6 @@ server <- function(input, output) {
       addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
                  icon = sourceGraphIcon(2)) %>%
       addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-                 icon = sourceGraphIcon(1)) 
+                 icon = sourceGraphIcon(1))
   })
 }
-
-# Create Shiny app
-runApp(shinyApp(ui, server), launch.browser = TRUE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
