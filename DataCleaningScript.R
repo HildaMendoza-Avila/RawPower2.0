@@ -49,6 +49,53 @@ rm(divideFactor)
 
 colnames(energyData)[which(names(energyData) == 'Non-RenewableGenerationPercentage')] <- "NonRenewableGenerationPercentage"
 
+# identify the main energy source type for all of the energy plants
+
+sourcesList <- list(COAL = "COAL",  OIL = "OIL", GAS = "GAS", NUCLEAR = "NUCLEAR", 
+                      HYDRO = "HYDRO", BIOMASS = "BIOMASS", WIND = "WIND", 
+                      SOLAR = "SOLAR", GEOTHERMAL = "GEOTHERMAL", OTHER = "OTHER", NO_ENERGY_PRODUCED = "NO_ENERGY_PRODUCED")
+
+if (nrow(energyData) >= 1){
+  MainEnergySources <- vector("character", nrow(energyData))
+  for (currPlantRow in 1:nrow(energyData)){
+    mainType = sourcesList$NO_ENERGY_PRODUCED
+    maxProducSoFar = 0
+    
+    for (currSourceCol in 10:18){ # Column indexes for the TOTAL production of the 9 Energy Sources at the current plant
+      currEnergyTotal = energyData[[currPlantRow, currSourceCol]]
+      
+      if (currEnergyTotal > maxProducSoFar){
+        maxProducSoFar = currEnergyTotal
+        
+        mainType = switch( (currSourceCol-9), 
+                           sourcesList$COAL,
+                           sourcesList$OIL,
+                           sourcesList$GAS, 
+                           sourcesList$NUCLEAR,
+                           sourcesList$HYDRO, 
+                           sourcesList$BIOMASS,
+                           sourcesList$WIND, 
+                           sourcesList$SOLAR,
+                           sourcesList$GEOTHERMAL,
+        )
+      }
+      
+    }
+    
+    # check for OTHER_TOTAL since it was not in the column range above
+    otherEnergyTotal = energyData[[currPlantRow, 32]]
+    if (otherEnergyTotal > maxProducSoFar){
+      maxProducSoFar = otherEnergyTotal
+      mainType = sourcesList$OTHER
+    }
+    
+    MainEnergySources[[currPlantRow]] <- mainType
+  }
+}
+energyData$MainEnergySource <- MainEnergySources
+
+rm(currEnergyTotal, currSourceCol, MainEnergySources, currPlantRow, mainType, maxProducSoFar, otherEnergyTotal, sourcesList)
+
 # END OF DATA CLEANING --------------------------------------
 
 write_xlsx(energyData,"cleanedEnergyData.xlsx")

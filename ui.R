@@ -87,7 +87,6 @@ dashboardPage(
   ),
   dashboardBody(
     tags$style(type = "text/css", "#selectedStateMap {height: calc(100vh - 90px) !important;}"),
-    verbatimTextOutput("selectedCheck"),
     leafletOutput("selectedStateMap")
   )
 )
