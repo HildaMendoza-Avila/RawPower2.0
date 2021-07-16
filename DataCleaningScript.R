@@ -13,8 +13,10 @@ energyData <- read_excel("egrid2018_data_v2.xlsx")
 
 # replace all Na entries with 0
 energyData[is.na(energyData)] = 0.00000000
-# energyData < - subset(energyData, )    #Latitude > 0 || Latitude < 0)
-# energyData < - subset(energyData, Longitude != 0)
+
+energyData <- subset(energyData, Latitude > 0.00000)
+energyData <- subset(energyData, Longitude != 0)
+
 
 # replace all negatives with 0
 negativeSubset <- subset(energyData, select=9:length(energyData))
@@ -44,6 +46,8 @@ energyData$SOLAR_PERCENTAGE <- energyData$SOLAR_PERCENTAGE/divideFactor
 energyData$GEOTHERMAL_PERCENTAGE <- energyData$GEOTHERMAL_PERCENTAGE/divideFactor
 energyData$OTHER_PERCENTAGE <- energyData$OTHER_PERCENTAGE/divideFactor
 rm(divideFactor)
+
+colnames(energyData)[which(names(energyData) == 'Non-RenewableGenerationPercentage')] <- "NonRenewableGenerationPercentage"
 
 # END OF DATA CLEANING --------------------------------------
 

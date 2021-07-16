@@ -69,10 +69,25 @@ dashboardPage(
                   "Wisconsin",
                   "Wyoming"
                 )
-    )
+    ), 
+    checkboxInput("allCheck", "All", TRUE), 
+    checkboxInput("noProductionPlants", "Plants With No Production", FALSE),
+    checkboxInput("coalCheck", "Coal", FALSE), 
+    checkboxInput("oilCheck", "Oil", FALSE), 
+    checkboxInput("gasCheck", "Gas", FALSE), 
+    checkboxInput("nuclearCheck", "Nuclear", FALSE), 
+    checkboxInput("hydroCheck", "Hydro", FALSE), 
+    checkboxInput("biomassCheck", "Biomass", FALSE), 
+    checkboxInput("windCheck", "Wind", FALSE), 
+    checkboxInput("solarCheck", "Solar", FALSE), 
+    checkboxInput("geothermalCheck", "Geothermal", FALSE), 
+    checkboxInput("otherCheck", "Other", FALSE), 
+    checkboxInput("renewablesCheck", "Renewables", FALSE), 
+    checkboxInput("nonrenewablesCheck", "Non-renewables", FALSE)
   ),
   dashboardBody(
     tags$style(type = "text/css", "#selectedStateMap {height: calc(100vh - 90px) !important;}"),
+    verbatimTextOutput("selectedCheck"),
     leafletOutput("selectedStateMap")
   )
 )
