@@ -4,8 +4,9 @@
 library(shinydashboard)
 library(leaflet)
 library(dplyr)
-library(tidyverse)
+library(readxl)
 library(curl) # make the jsonlite suggested dependency explicit
+library(leaflet.extras)
 
 # Define server logic required to draw a leaflet Map
 function(input, output, session) {
@@ -20,11 +21,59 @@ function(input, output, session) {
                      SOLAR = "SOLAR.png", GEOTHERMAL = "GEOTHERMAL.png", OTHER = "OTHER.png", NO_ENERGY_PRODUCED = "No_Energy_Production.png")
   
   universalTotalGraphWidth = 7
-  universalTotalGraphHeight = 50
+  universalTotalGraphHeight = 20
   
   getStateDataset <- function(selectedState) {
     selectedStateData <- subset(energyData, PlantState == selectedState)
+    selectedStateData
+  }
+  
+  getStateCenter <- function(selectedStateData){
+    # return a list of two elements
+    # first element is the Longitude of the center of the selected state
+    # second element is the Latitude of the center of the selected state
     
+    if (nrow(selectedStateData) >= 1){
+      lngIndex = 6    # Longitude is column 6
+      latIndex = 5    # Latitude  is column 5
+      
+      lngMin = selectedStateData[[1, lngIndex]] 
+      lngMax = selectedStateData[[1, lngIndex]] 
+      
+      latMin = selectedStateData[[1, latIndex]] 
+      latMax = selectedStateData[[1, latIndex]]
+      
+      
+      # MainEnergySources <- vector("character", nrow(energyData))
+      for (currPlantRow in 1:nrow(selectedStateData)){
+        currLngVal = selectedStateData[[currPlantRow, lngIndex]]
+        currLatVal = selectedStateData[[currPlantRow, latIndex]]
+        
+        if(currLngVal > lngMax){
+          lngMax = currLngVal
+        }
+        else if(currLngVal < lngMin){
+          lngMin = currLngVal
+        }
+        
+        if(currLatVal > latMax){
+          latMax = currLatVal
+        }
+        else if(currLatVal < latMin){
+          latMin = currLatVal
+        }
+      }
+      longitude = ((lngMax - lngMin)/2) + lngMin
+      latitude  = ((latMax - latMin)/2) + latMin
+      
+      centerCoords <- list(Lng = longitude, Lat = latitude, 
+                           lngMin = lngMin, lngMax = lngMax, 
+                           latMin = latMin, latMax = latMax)
+      centerCoords
+    }
+  }
+  
+  clearUnselectedSources <- function(selectedStateData){
     if(!input$allCheck){
       if(!input$coalCheck && !input$nonrenewablesCheck){
         selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$COAL)
@@ -64,6 +113,16 @@ function(input, output, session) {
     
     selectedStateData
   }
+  
+  # TODO: finish working on the logic for this function :)
+  getZoomValue <- function(stateCoords){
+    # compute zoom integer value according to the provided stateCoords list information
+    # stateCoords$lngMin, stateCoords$lngMax, stateCoords$latMin, stateCoords$latMax
+    
+    6
+  }
+  
+  
   
   
   plantEnergyIcons <- iconList(
@@ -141,31 +200,45 @@ function(input, output, session) {
   output$selectedStateMap <- renderLeaflet({
     stateDataset <- datasetInput()
     
+    stateCoords <- getStateCenter(stateDataset)
+    
+    stateDataset <- clearUnselectedSources(stateDataset)
+    
     leaflet(stateDataset) %>%
       addTiles() %>%  # Adds default OpenStreetMap map titles
-      addMarkers(lng = stateDataset$Longitude, lat=stateDataset$Latitude, popup=stateDataset$PlantName, icon = ~plantEnergyIcons[MainEnergySource])
+      setView(stateCoords$Lng, stateCoords$Lat, zoom = getZoomValue(stateCoords)) %>%
+      # fitBounds(lng1 = stateCoords$lngMin, lng2 = stateCoords$lngMax, lat1 = stateCoords$latMin, lat2 = stateCoords$latMax) %>%
+      addEasyButton(easyButton(
+        icon="fa-crosshairs", title = "Locate me", 
+        onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>%
+      addMarkers(lng = stateDataset$Longitude, lat = stateDataset$Latitude, popup = stateDataset$PlantName, icon = ~plantEnergyIcons[MainEnergySource]) %>%
+      addResetMapButton() 
     
     
     
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(10)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(9)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(8)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(7)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(6)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(5)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(4)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(3)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(2)) %>%
-    # addMarkers(lng = dataset$Longitude, lat=dataset$Latitude, popup=dataset$PlantName,
-    #            icon = sourceGraphIcon(1))
+    # TODO: if user allows location permission, then find a way to display the selected energy sources located in the user's area
+    
   })
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

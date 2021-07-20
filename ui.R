@@ -68,7 +68,8 @@ dashboardPage(
                   "West Virginia",
                   "Wisconsin",
                   "Wyoming"
-                )
+                ), 
+                selected = "Illinois"
     ), 
     checkboxInput("allCheck", "All", TRUE), 
     checkboxInput("noProductionPlants", "Plants With No Production", FALSE),
@@ -87,6 +88,6 @@ dashboardPage(
   ),
   dashboardBody(
     tags$style(type = "text/css", "#selectedStateMap {height: calc(100vh - 90px) !important;}"),
-    leafletOutput("selectedStateMap")
+    leafletOutput("selectedStateMap",  width = "100%", height = "100%")
   )
 )
