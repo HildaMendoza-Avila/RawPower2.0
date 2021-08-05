@@ -23,107 +23,61 @@ function(input, output, session) {
   universalTotalGraphWidth = 7
   universalTotalGraphHeight = 20
   
+  
   getStateDataset <- function(selectedState) {
     selectedStateData <- subset(energyData, PlantState == selectedState)
     selectedStateData
   }
   
-  getStateCenter <- function(selectedStateData){
-    # return a list of two elements
-    # first element is the Longitude of the center of the selected state
-    # second element is the Latitude of the center of the selected state
-    
-    if (nrow(selectedStateData) >= 1){
-      lngIndex = 6    # Longitude is column 6
-      latIndex = 5    # Latitude  is column 5
-      
-      lngMin = selectedStateData[[1, lngIndex]] 
-      lngMax = selectedStateData[[1, lngIndex]] 
-      
-      latMin = selectedStateData[[1, latIndex]] 
-      latMax = selectedStateData[[1, latIndex]]
-      
-      
-      # MainEnergySources <- vector("character", nrow(energyData))
-      for (currPlantRow in 1:nrow(selectedStateData)){
-        currLngVal = selectedStateData[[currPlantRow, lngIndex]]
-        currLatVal = selectedStateData[[currPlantRow, latIndex]]
-        
-        if(currLngVal > lngMax){
-          lngMax = currLngVal
-        }
-        else if(currLngVal < lngMin){
-          lngMin = currLngVal
-        }
-        
-        if(currLatVal > latMax){
-          latMax = currLatVal
-        }
-        else if(currLatVal < latMin){
-          latMin = currLatVal
-        }
-      }
-      longitude = ((lngMax - lngMin)/2) + lngMin
-      latitude  = ((latMax - latMin)/2) + latMin
-      
-      centerCoords <- list(Lng = longitude, Lat = latitude, 
-                           lngMin = lngMin, lngMax = lngMax, 
-                           latMin = latMin, latMax = latMax)
-      centerCoords
-    }
-  }
-  
   clearUnselectedSources <- function(selectedStateData){
     if(!input$allCheck){
-      if(!input$coalCheck && !input$nonrenewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$COAL)
+      
+      if(!input$nonrenewablesCheck){
+        
+        if(!input$coalCheck){
+          selectedStateData <- subset(selectedStateData, !(COAL_PERCENTAGE > 0) )    
+        }
+        if(!input$oilCheck){
+          selectedStateData <- subset(selectedStateData, !(OIL_PERCENTAGE > 0) )    
+        }
+        if(!input$gasCheck){
+          selectedStateData <- subset(selectedStateData, !(GAS_PERCENTAGE > 0) )    
+        }
+        if(!input$nuclearCheck){
+          selectedStateData <- subset(selectedStateData, !(NUCLEAR_PERCENTAGE > 0) )    
+        }
+        if(!input$otherCheck){
+          selectedStateData <- subset(selectedStateData, !(OTHER_PERCENTAGE > 0) )    
+        }
+        
       }
-      if(!input$oilCheck && !input$nonrenewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$OIL)
-      }
-      if(!input$gasCheck && !input$nonrenewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$GAS)
-      }
-      if(!input$nuclearCheck && !input$nonrenewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$NUCLEAR)
-      }
-      if(!input$hydroCheck && !input$renewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$HYDRO)
-      }
-      if(!input$biomassCheck && !input$renewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$BIOMASS)
-      }
-      if(!input$windCheck && !input$renewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$WIND)
-      }
-      if(!input$solarCheck && !input$renewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$SOLAR)
-      }
-      if(!input$geothermalCheck && !input$renewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$GEOTHERMAL)
-      }
-      if(!input$otherCheck && !input$nonrenewablesCheck){
-        selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$OTHER)
+      if (!input$renewablesCheck){
+        
+        if(!input$hydroCheck){
+          selectedStateData <- subset(selectedStateData, !(HYDRO_PERCENTAGE > 0) )    
+        }
+        if(!input$biomassCheck){
+          selectedStateData <- subset(selectedStateData, !(BIOMASS_PERCENTAGE > 0) )   
+        }
+        if(!input$windCheck){
+          selectedStateData <- subset(selectedStateData, !(WIND_PERCENTAGE > 0) )    
+        }
+        if(!input$solarCheck){
+          selectedStateData <- subset(selectedStateData, !(SOLAR_PERCENTAGE > 0) )    
+        }
+        if(!input$geothermalCheck){
+          selectedStateData <- subset(selectedStateData, !(GEOTHERMAL_PERCENTAGE > 0) )    
+        }
+        
       }
     }
     
     if(!input$noProductionPlants){
-      selectedStateData <- subset(selectedStateData, MainEnergySource != sourcesList$NO_ENERGY_PRODUCED)
+      selectedStateData <- subset(selectedStateData, ((NonRenewableGenerationPercentage + RenewableGenerationPercentage) > 0) )   
     }
     
     selectedStateData
   }
-  
-  # TODO: finish working on the logic for this function :)
-  getZoomValue <- function(stateCoords){
-    # compute zoom integer value according to the provided stateCoords list information
-    # stateCoords$lngMin, stateCoords$lngMax, stateCoords$latMin, stateCoords$latMax
-    
-    6
-  }
-  
-  
-  
   
   plantEnergyIcons <- iconList(
     COAL               = makeIcon(sourceURLs$COAL,               iconWidth = universalTotalGraphWidth, iconHeight = universalTotalGraphHeight),
@@ -195,50 +149,20 @@ function(input, output, session) {
     )
   })
   
-  # output$selectedCheck <- renderText({input$allCheck})
-  
   output$selectedStateMap <- renderLeaflet({
     stateDataset <- datasetInput()
-    
-    stateCoords <- getStateCenter(stateDataset)
     
     stateDataset <- clearUnselectedSources(stateDataset)
     
     leaflet(stateDataset) %>%
       addTiles() %>%  # Adds default OpenStreetMap map titles
-      setView(stateCoords$Lng, stateCoords$Lat, zoom = getZoomValue(stateCoords)) %>%
-      # fitBounds(lng1 = stateCoords$lngMin, lng2 = stateCoords$lngMax, lat1 = stateCoords$latMin, lat2 = stateCoords$latMax) %>%
       addEasyButton(easyButton(
         icon="fa-crosshairs", title = "Locate me", 
         onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>%
       addMarkers(lng = stateDataset$Longitude, lat = stateDataset$Latitude, popup = stateDataset$PlantName, icon = ~plantEnergyIcons[MainEnergySource]) %>%
       addResetMapButton() 
     
-    
-    
     # TODO: if user allows location permission, then find a way to display the selected energy sources located in the user's area
     
   })
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

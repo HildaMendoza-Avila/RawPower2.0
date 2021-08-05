@@ -5,6 +5,7 @@
 
 library(readxl)
 library("writexl")
+library(tidyverse)
 options(scipen = 100)
 
 energyData <- read_excel("egrid2018_data_v2.xlsx")
@@ -17,6 +18,7 @@ energyData[is.na(energyData)] = 0.00000000
 energyData <- subset(energyData, Latitude > 0.00000)
 energyData <- subset(energyData, Longitude != 0)
 
+names(energyData)[names(energyData) == "Non-RenewableGenerationPercentage"] <- "NonRenewableGenerationPercentage"
 
 # replace all negatives with 0
 negativeSubset <- subset(energyData, select=9:length(energyData))
@@ -45,9 +47,9 @@ energyData$WIND_PERCENTAGE <- energyData$WIND_PERCENTAGE/divideFactor
 energyData$SOLAR_PERCENTAGE <- energyData$SOLAR_PERCENTAGE/divideFactor
 energyData$GEOTHERMAL_PERCENTAGE <- energyData$GEOTHERMAL_PERCENTAGE/divideFactor
 energyData$OTHER_PERCENTAGE <- energyData$OTHER_PERCENTAGE/divideFactor
+energyData$RenewableGenerationPercentage <- energyData$RenewableGenerationPercentage/divideFactor
+energyData$NonRenewableGenerationPercentage <- energyData$NonRenewableGenerationPercentage/divideFactor
 rm(divideFactor)
-
-colnames(energyData)[which(names(energyData) == 'Non-RenewableGenerationPercentage')] <- "NonRenewableGenerationPercentage"
 
 # identify the main energy source type for all of the energy plants
 
