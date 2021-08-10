@@ -13,14 +13,14 @@ dashboardPage(
     # App title
     title = "Raw Power 2.0"
   ),
-  dashboardSidebar(),
+  dashboardSidebar(disable = TRUE),
   dashboardBody(
     column(width = 3,
            box(width = NULL,
                
                # Input: Selector for choosing stateDataset
                selectInput(inputId = "stateDataset",
-                           label = "Choose a state:",
+                           label = "Select a state:",
                            choices = c(
                              "Alabama",
                              "Alaska",
@@ -75,6 +75,7 @@ dashboardPage(
                            ), 
                            selected = "Illinois"
                ), 
+               textOutput("sourceCheckPrompt"),
                checkboxInput("allCheck", "All", TRUE), 
                checkboxInput("noProductionPlants", "Plants With No Production", FALSE),
                checkboxInput("coalCheck", "Coal", FALSE), 
@@ -93,7 +94,6 @@ dashboardPage(
     ),
     
     tags$style(type = "text/css", "#selectedStateMap {height: calc(100vh - 90px) !important;}"),
-    verbatimTextOutput("stateCoordsInfo"),
     leafletOutput("selectedStateMap",  width = "75%", height = "100%")
   )
 )

@@ -149,6 +149,8 @@ function(input, output, session) {
     )
   })
   
+  output$sourceCheckPrompt <- renderText("\nSelect the power sources to be mapped:")
+  
   output$selectedStateMap <- renderLeaflet({
     stateDataset <- datasetInput()
     
