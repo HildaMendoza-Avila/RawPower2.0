@@ -29,50 +29,51 @@ function(input, output, session) {
     selectedStateData
   }
   
-  clearUnselectedSources <- function(selectedStateData){
-    if(!input$allCheck){
+  clearUnselectedSources <- function(selectedStateData, allCheck, coalCheck, oilCheck, gasCheck, nuclearCheck, otherCheck, nonrenewablesCheck, 
+                                     hydroCheck, biomassCheck, windCheck, solarCheck, geothermalCheck, renewablesCheck, noProductionPlants){
+    if(!allCheck){
       
-      if(!input$nonrenewablesCheck){
+      if(!nonrenewablesCheck){
         
-        if(!input$coalCheck){
+        if(!coalCheck){
           selectedStateData <- subset(selectedStateData, !(COAL_PERCENTAGE > 0) )    
         }
-        if(!input$oilCheck){
+        if(!oilCheck){
           selectedStateData <- subset(selectedStateData, !(OIL_PERCENTAGE > 0) )    
         }
-        if(!input$gasCheck){
+        if(!gasCheck){
           selectedStateData <- subset(selectedStateData, !(GAS_PERCENTAGE > 0) )    
         }
-        if(!input$nuclearCheck){
+        if(!nuclearCheck){
           selectedStateData <- subset(selectedStateData, !(NUCLEAR_PERCENTAGE > 0) )    
         }
-        if(!input$otherCheck){
+        if(!otherCheck){
           selectedStateData <- subset(selectedStateData, !(OTHER_PERCENTAGE > 0) )    
         }
         
       }
-      if (!input$renewablesCheck){
+      if (!renewablesCheck){
         
-        if(!input$hydroCheck){
+        if(!hydroCheck){
           selectedStateData <- subset(selectedStateData, !(HYDRO_PERCENTAGE > 0) )    
         }
-        if(!input$biomassCheck){
+        if(!biomassCheck){
           selectedStateData <- subset(selectedStateData, !(BIOMASS_PERCENTAGE > 0) )   
         }
-        if(!input$windCheck){
+        if(!windCheck){
           selectedStateData <- subset(selectedStateData, !(WIND_PERCENTAGE > 0) )    
         }
-        if(!input$solarCheck){
+        if(!solarCheck){
           selectedStateData <- subset(selectedStateData, !(SOLAR_PERCENTAGE > 0) )    
         }
-        if(!input$geothermalCheck){
+        if(!geothermalCheck){
           selectedStateData <- subset(selectedStateData, !(GEOTHERMAL_PERCENTAGE > 0) )    
         }
         
       }
     }
     
-    if(!input$noProductionPlants){
+    if(!noProductionPlants){
       selectedStateData <- subset(selectedStateData, ((NonRenewableGenerationPercentage + RenewableGenerationPercentage) > 0) )   
     }
     
@@ -94,8 +95,8 @@ function(input, output, session) {
   )
   
   # Return the requested dataset ----
-  datasetInput <- reactive({
-    switch(input$stateDataset,
+  left_datasetInput <- reactive({
+    switch(input$left_stateDataset,
            "Alabama" = getStateDataset('AL'),
            "Alaska" = getStateDataset('AK'),
            "Arizona" = getStateDataset('AZ'),
@@ -149,22 +150,133 @@ function(input, output, session) {
     )
   })
   
-  output$sourceCheckPrompt <- renderText("\nSelect the power sources to be mapped:")
+  right_datasetInput <- reactive({
+    switch(input$right_stateDataset,
+           "Alabama" = getStateDataset('AL'),
+           "Alaska" = getStateDataset('AK'),
+           "Arizona" = getStateDataset('AZ'),
+           "Arkansas" = getStateDataset('AR'),
+           "California" = getStateDataset('CA'),
+           "Colorado" = getStateDataset('CO'),
+           "Connecticut" = getStateDataset('CT'),
+           "Delaware" = getStateDataset('DE'),
+           "Florida" = getStateDataset('FL'),
+           "Georgia" = getStateDataset('GA'),
+           "Hawaii" = getStateDataset('HI'),
+           "Idaho" = getStateDataset('ID'),
+           "Illinois" = getStateDataset('IL'),
+           "Indiana" = getStateDataset('IN'),
+           "Iowa" = getStateDataset('IA'),
+           "Kansas" = getStateDataset('KS'),
+           "Kentucky" = getStateDataset('KY'),
+           "Louisiana" = getStateDataset('LA'),
+           "Maine" = getStateDataset('ME'),
+           "Maryland" = getStateDataset('MD'),
+           "Massachusetts" = getStateDataset('MA'),
+           "Michigan" = getStateDataset('MI'),
+           "Minnesota" = getStateDataset('MN'),
+           "Mississippi" = getStateDataset('MS'),
+           "Missouri" = getStateDataset('MO'),
+           "Montana" = getStateDataset('MT'),
+           "Nebraska" = getStateDataset('NE'),
+           "Nevada" = getStateDataset('NV'),
+           "New Hampshire" = getStateDataset('NH'),
+           "New Jersey" = getStateDataset('NJ'),
+           "New Mexico" = getStateDataset('NM'),
+           "New York" = getStateDataset('NY'),
+           "North Carolina" = getStateDataset('NC'),
+           "North Dakota" = getStateDataset('ND'),
+           "Ohio" = getStateDataset('OH'),
+           "Oklahoma" = getStateDataset('OK'),
+           "Oregon" = getStateDataset('OR'),
+           "Pennsylvania" = getStateDataset('PA'),
+           "Rhode Island" = getStateDataset('RI'),
+           "South Carolina" = getStateDataset('SC'),
+           "South Dakota" = getStateDataset('SD'),
+           "Tennessee" = getStateDataset('TN'),
+           "Texas" = getStateDataset('TX'),
+           "Utah" = getStateDataset('UT'),
+           "Vermont" = getStateDataset('VT'),
+           "Virginia" = getStateDataset('VA'),
+           "Washington" = getStateDataset('WA'),
+           "West Virginia" = getStateDataset('WV'),
+           "Wisconsin" = getStateDataset('WI'),
+           "Wyoming" = getStateDataset('WY')
+    )
+  })
   
-  output$selectedStateMap <- renderLeaflet({
-    stateDataset <- datasetInput()
+  output$left_sourceCheckPrompt  <- renderText("\nSelect the electrical power generation sources to be mapped on left map:")
+  output$right_sourceCheckPrompt <- renderText("\nSelect the electrical power generation sources to be mapped on right map:")
+  
+  output$leftMap <- renderLeaflet({
+    stateDataset <- left_datasetInput()
     
-    stateDataset <- clearUnselectedSources(stateDataset)
+    stateDataset <- clearUnselectedSources(stateDataset, input$left_allCheck, 
+                                          input$left_coalCheck, input$left_oilCheck, input$left_gasCheck, input$left_nuclearCheck, 
+                                          input$left_otherCheck, input$left_nonrenewablesCheck, input$left_hydroCheck, input$left_biomassCheck, 
+                                          input$left_windCheck, input$left_solarCheck, input$left_geothermalCheck, input$left_renewablesCheck, 
+                                          input$left_noProductionPlants)
     
     leaflet(stateDataset) %>%
       addTiles() %>%  # Adds default OpenStreetMap map titles
       addEasyButton(easyButton(
         icon="fa-crosshairs", title = "Locate me", 
         onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>%
-      addMarkers(lng = stateDataset$Longitude, lat = stateDataset$Latitude, popup = stateDataset$PlantName, icon = ~plantEnergyIcons[MainEnergySource]) %>%
+      addMarkers(lng = stateDataset$Longitude, lat = stateDataset$Latitude, 
+                 popup = paste("Plant Name: ", stateDataset$PlantName, 
+                               "<br>Main Electricity Production Source: ", stateDataset$MainEnergySource, 
+                               "<br>Annual Electricity Generation Total: ", stateDataset$AnnualGenerationTotal, 
+                               "(MWh)<br>Coal Energy Generation Percentage: ", stateDataset$COAL_PERCENTAGE, 
+                               "%<br>Oil Energy Generation Percentage: ", stateDataset$OIL_PERCENTAGE, 
+                               "%<br>Gas Energy Generation Percentage: ", stateDataset$GAS_PERCENTAGE, 
+                               "%<br>Nuclear Energy Generation Percentage: ", stateDataset$NUCLEAR_PERCENTAGE, 
+                               "%<br>Hydro Energy Generation Percentage: ", stateDataset$HYDRO_PERCENTAGE, 
+                               "%<br>Biomass Energy Generation Percentage: ", stateDataset$BIOMASS_PERCENTAGE, 
+                               "%<br>Wind Energy Generation Percentage: ", stateDataset$WIND_PERCENTAGE, 
+                               "%<br>Solar Energy Generation Percentage: ", stateDataset$SOLAR_PERCENTAGE, 
+                               "%<br>Geothermal Energy Generation Percentage: ", stateDataset$GEOTHERMAL_PERCENTAGE, 
+                               "%<br>Non-Renewable Energy Production Percentage: ", stateDataset$NonRenewableGenerationPercentage, 
+                               "%<br>Renewable Energy Production Percentage: ", stateDataset$RenewableGenerationPercentage, 
+                               "%<br>Other Energy Generation Percentage: ", stateDataset$OTHER_PERCENTAGE, "%"), 
+                 icon = ~plantEnergyIcons[MainEnergySource]) %>%
       addResetMapButton() 
     
     # TODO: if user allows location permission, then find a way to display the selected energy sources located in the user's area
     
+  })
+  
+  
+  output$rightMap <- renderLeaflet({
+    stateDataset <- right_datasetInput()
+    
+    stateDataset <- clearUnselectedSources(stateDataset, input$right_allCheck, 
+                                           input$right_coalCheck, input$right_oilCheck, input$right_gasCheck, input$right_nuclearCheck, 
+                                           input$right_otherCheck, input$right_nonrenewablesCheck, input$right_hydroCheck, input$right_biomassCheck, 
+                                           input$right_windCheck, input$right_solarCheck, input$right_geothermalCheck, input$right_renewablesCheck, 
+                                           input$right_noProductionPlants)
+    
+    leaflet(stateDataset) %>%
+      addTiles() %>%  # Adds default OpenStreetMap map titles
+      addEasyButton(easyButton(
+        icon="fa-crosshairs", title = "Locate me", 
+        onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>%
+      addMarkers(lng = stateDataset$Longitude, lat = stateDataset$Latitude, 
+                 popup = paste("Plant Name: ", stateDataset$PlantName, 
+                               "<br>Main Electricity Production Source: ", stateDataset$MainEnergySource, 
+                               "<br>Annual Electricity Generation Total: ", stateDataset$AnnualGenerationTotal, 
+                               "(MWh)<br>Coal Energy Generation Percentage: ", stateDataset$COAL_PERCENTAGE, 
+                               "%<br>Oil Energy Generation Percentage: ", stateDataset$OIL_PERCENTAGE, 
+                               "%<br>Gas Energy Generation Percentage: ", stateDataset$GAS_PERCENTAGE, 
+                               "%<br>Nuclear Energy Generation Percentage: ", stateDataset$NUCLEAR_PERCENTAGE, 
+                               "%<br>Hydro Energy Generation Percentage: ", stateDataset$HYDRO_PERCENTAGE, 
+                               "%<br>Biomass Energy Generation Percentage: ", stateDataset$BIOMASS_PERCENTAGE, 
+                               "%<br>Wind Energy Generation Percentage: ", stateDataset$WIND_PERCENTAGE, 
+                               "%<br>Solar Energy Generation Percentage: ", stateDataset$SOLAR_PERCENTAGE, 
+                               "%<br>Geothermal Energy Generation Percentage: ", stateDataset$GEOTHERMAL_PERCENTAGE, 
+                               "%<br>Non-Renewable Energy Production Percentage: ", stateDataset$NonRenewableGenerationPercentage, 
+                               "%<br>Renewable Energy Production Percentage: ", stateDataset$RenewableGenerationPercentage, 
+                               "%<br>Other Energy Generation Percentage: ", stateDataset$OTHER_PERCENTAGE, "%"), 
+                 icon = ~plantEnergyIcons[MainEnergySource]) %>%
+      addResetMapButton() 
   })
 }
